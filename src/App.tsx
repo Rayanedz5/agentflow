@@ -5,9 +5,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { 
-  MessageSquare, Send, Sparkles, Terminal, ShieldAlert, FileText, 
-  CheckCircle2, RefreshCw, ChevronDown, ChevronUp, Clock, 
-  Trash2, BookOpen, Layers, AlertCircle, Cpu, ArrowRight, Code
+  RefreshCw, ChevronDown, ChevronUp, Clock, 
+  Trash2, Layers, AlertCircle, ArrowRight
 } from "lucide-react";
 import Markdown from "react-markdown";
 import { ChatMessage, AgentStep, ExamplePrompt } from "./types";
@@ -466,7 +465,6 @@ export default function App() {
                   {loadingSteps.map((step, idx) => {
                     const isCompleted = activeStepIndex > idx;
                     const isRunning = activeStepIndex === idx;
-                    const isPending = activeStepIndex < idx;
 
                     return (
                       <div key={idx} className="flex items-start space-x-3.5 transition-all duration-300">
@@ -556,21 +554,12 @@ export default function App() {
               </button>
             </div>
 
-            <p className="text-[10px] text-slate-400 px-4 text-center leading-relaxed font-semibold uppercase tracking-wider">
-              AgentFlow runs sequentially to guarantee code quality. Product Manager ➔ Coder ➔ Code Reviewer ➔ Revision ➔ QA Tester.
+            <p className="text-[10px] text-slate-400 text-center px-4">
+              AgentFlow system uses structural pipeline verification logic before producing definitive responses.
             </p>
           </form>
         </div>
-
       </main>
-
-      {/* Structured Course Project Footer from Sleek Theme */}
-      <footer className="px-6 sm:px-8 py-6 bg-white border-t border-slate-200 flex flex-col gap-4 text-center">
-        <div className="flex justify-center text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-          Built for Multi-Agent Systems Course Project
-        </div>
-      </footer>
-
     </div>
   );
 }
