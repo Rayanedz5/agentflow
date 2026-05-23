@@ -33,7 +33,8 @@ export const handler: Handler = async (event, context) => {
     }
 
     // 4. Call Gemini Model (using gemini-pro or your chosen model)
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    // To this:
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const result = await model.generateContent(message);
     const responseText = result.response.text();
 
