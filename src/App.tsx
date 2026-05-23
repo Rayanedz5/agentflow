@@ -2,7 +2,6 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { useState, useRef, useEffect } from "react";
 import { 
   MessageSquare, Send, Sparkles, Terminal, ShieldAlert, FileText, 
@@ -63,75 +62,60 @@ export default function App() {
       icon: "🔑"
     }
   ];
-
+  const clearChat = () => {
+    setMessages([]);
+  };
   // Pipeline executor trigger
-  const handleSendMessage = async (textToSend: string) => {
-    if (!textToSend.trim() || isAnalyzing) return;
-
-    const userMsg: ChatMessage = {
-      id: Math.random().toString(),
-      sender: "user",
-      text: textToSend,
-      timestamp: new Date()
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setInputValue("");
+  const handleSendMessage = async (userMessage: string) => {
+    if (!userMessage.trim()) return;
+  
+    // 1. Clear any previous errors/states and append the user's message to the UI
     setIsAnalyzing(true);
-
+    
     try {
-      const response = await fetch("/api/chat", {
+      // 2. Route the request to your deployed Netlify serverless function endpoint
+      const response = await fetch("/.netlify/functions/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: textToSend })
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: userMessage }),
       });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        const agentMsg: ChatMessage = {
-          id: data.id || Math.random().toString(),
-          sender: "agents",
-          text: data.finalResponse,
-          trace: data.trace,
-          timestamp: new Date()
-        };
-        setMessages((prev) => [...prev, agentMsg]);
-        
-        // Auto-expand this trace and select the first tab
-        setExpandedTraceIndex(prev => ({ ...prev, [agentMsg.id]: true }));
-        setSelectedAgentTab(prev => ({ ...prev, [agentMsg.id]: 0 }));
-      } else {
-        const errMsg: ChatMessage = {
-          id: Math.random().toString(),
-          sender: "system",
-          text: data.error || "A custom developer error was encountered. Check your API key setup in Settings > Secrets.",
-          timestamp: new Date(),
-          isError: true
-        };
-        setMessages((prev) => [...prev, errMsg]);
+  
+      if (!response.ok) {
+        throw new Error(`Server responded with status: ${response.status}`);
       }
-    } catch (err: any) {
-      const errMsg: ChatMessage = {
+  
+      const data = await response.json();
+  
+      // 3. Add the agent team's combined answer back to the UI
+      const agentMsg: ChatMessage = {
         id: Math.random().toString(),
-        sender: "system",
-        text: "Could not connect to the local full-stack server. Ensure that server is started properly.",
+        sender: "user",
+        text: data.response || data.message || "No response received.",
         timestamp: new Date(),
-        isError: true
       };
-      setMessages((prev) => [...prev, errMsg]);
+  
+      setMessages((prev) => [...prev, agentMsg]);
+  
+    } catch (error) {
+      console.error("Connection failed:", error);
+  
+      // Fallback error message in the UI so it doesn't get stuck forever Loading
+      const errorMsg: ChatMessage = {
+        id: Math.random().toString(),
+        sender: "user", // Ensured this is "agent" so it renders as a bot response block
+        text: "Error: Could not establish connection to the collaborative agent cluster. Please check your setup.",
+        timestamp: new Date(),
+      };
+  
+      setMessages((prev) => [...prev, errorMsg]);
+  
     } finally {
+      // This block runs cleanly after either success or catch completes
       setIsAnalyzing(false);
     }
   };
-
-  const clearChat = () => {
-    if (window.confirm("Are you sure you want to clear your conversation history?")) {
-      setMessages([]);
-    }
-  };
-
-  // Stepper representation for visual excitement during processing
   const loadingSteps = [
     { name: "Product Manager Agent", role: "Analyzing requirements & preparing spec...", css: "border-indigo-500 text-indigo-600 bg-indigo-50" },
     { name: "Developer Agent (Coder)", role: "Writing draft implementation core...", css: "border-blue-500 text-blue-600 bg-blue-50" },
