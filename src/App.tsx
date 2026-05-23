@@ -254,7 +254,7 @@ export default function App() {
           <div className="flex-1 space-y-8 mb-6">
             {messages.map((msg, index) => {
               const isUser = msg.sender === "user";
-              const isSystem = msg.sender === "system";
+              const isSystem = msg.sender === "system" || msg.text.startsWith("Error:");
 
               if (isSystem) {
                 return (
