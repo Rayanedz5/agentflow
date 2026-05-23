@@ -5,8 +5,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { 
-  RefreshCw, ChevronDown, ChevronUp, Clock, 
-  Trash2, Layers, AlertCircle, ArrowRight
+  MessageSquare, Send, Sparkles, Terminal, ShieldAlert, FileText, 
+  CheckCircle2, RefreshCw, ChevronDown, ChevronUp, Clock, 
+  Trash2, BookOpen, Layers, AlertCircle, Cpu, ArrowRight, Code
 } from "lucide-react";
 import Markdown from "react-markdown";
 import { ChatMessage, AgentStep, ExamplePrompt } from "./types";
@@ -79,7 +80,8 @@ export default function App() {
     setIsAnalyzing(true);
 
     try {
-      const response = await fetch("/api/chat", {
+      // Fixed endpoint route pointing to the Netlify production function layer
+      const response = await fetch("/.netlify/functions/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: textToSend })
@@ -87,26 +89,29 @@ export default function App() {
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
+      if (response.ok) {
+        const rawText = data.response || data.message || data.finalResponse || "No response received.";
+        
         const agentMsg: ChatMessage = {
           id: data.id || Math.random().toString(),
           sender: "agents",
-          text: data.finalResponse,
-          trace: data.trace,
+          text: rawText,
+          trace: data.trace || [],
           timestamp: new Date()
         };
         setMessages((prev) => [...prev, agentMsg]);
         
-        // Auto-expand this trace and select the first tab
-        setExpandedTraceIndex(prev => ({ ...prev, [agentMsg.id]: true }));
-        setSelectedAgentTab(prev => ({ ...prev, [agentMsg.id]: 0 }));
+        // Auto-expand this trace and select the first tab if data traces exist
+        if (data.trace && data.trace.length > 0) {
+          setExpandedTraceIndex(prev => ({ ...prev, [agentMsg.id]: true }));
+          setSelectedAgentTab(prev => ({ ...prev, [agentMsg.id]: 0 }));
+        }
       } else {
         const errMsg: ChatMessage = {
           id: Math.random().toString(),
           sender: "system",
           text: data.error || "A custom developer error was encountered. Check your API key setup in Settings > Secrets.",
-          timestamp: new Date(),
-          isError: true
+          timestamp: new Date()
         };
         setMessages((prev) => [...prev, errMsg]);
       }
@@ -115,8 +120,7 @@ export default function App() {
         id: Math.random().toString(),
         sender: "system",
         text: "Could not connect to the local full-stack server. Ensure that server is started properly.",
-        timestamp: new Date(),
-        isError: true
+        timestamp: new Date()
       };
       setMessages((prev) => [...prev, errMsg]);
     } finally {
@@ -245,6 +249,7 @@ export default function App() {
                 {examplePrompts.map((item, idx) => (
                   <button
                     key={idx}
+                    type="button"
                     onClick={() => handleSendMessage(item.prompt)}
                     className="flex flex-col text-left p-4 bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#2563EB] rounded-2xl hover:shadow h-full cursor-pointer transition-all duration-200 focus:outline-none group"
                   >
@@ -267,7 +272,7 @@ export default function App() {
         ) : (
           /* Active Chat Dialogue Container */
           <div className="flex-1 space-y-8 mb-6">
-            {messages.map((msg, index) => {
+            {messages.map((msg) => {
               const isUser = msg.sender === "user";
               const isSystem = msg.sender === "system";
 
@@ -306,7 +311,7 @@ export default function App() {
                   ) : (
                     <div className="w-full bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
                       
-                      {/* Stacked avatars header section from "Sleek Interface" design guidance */}
+                      {/* Stacked avatars header section */}
                       <div className="py-3 px-4 sm:px-6 bg-slate-50/50 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <div className="flex -space-x-1.5 shrink-0">
@@ -347,7 +352,7 @@ export default function App() {
                           <Markdown>{msg.text}</Markdown>
                         </div>
 
-                        {/* Beautiful generated summary notification banner at the bottom of output */}
+                        {/* Summary notification banner */}
                         <div className="flex gap-4 p-4 mt-6 bg-[#EFF6FF] rounded-2xl border border-blue-100/80 items-start">
                           <div className="w-9 h-9 rounded-xl bg-blue-600 shrink-0 flex items-center justify-center text-white shadow-md shadow-blue-300/40">
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -370,6 +375,7 @@ export default function App() {
                         <div className="bg-slate-50 border-t border-slate-200/70">
                           
                           <button
+                            type="button"
                             onClick={() => {
                               setExpandedTraceIndex(prev => ({
                                 ...prev,
@@ -400,6 +406,7 @@ export default function App() {
                                 {msg.trace.map((t, tIdx) => (
                                   <button
                                     key={tIdx}
+                                    type="button"
                                     onClick={() => {
                                       setSelectedAgentTab(prev => ({
                                         ...prev,
@@ -448,7 +455,7 @@ export default function App() {
               );
             })}
 
-            {/* Stepper Display during analyzing processing (Multi-Agent sequential visualization) */}
+            {/* Stepper Display during analyzing processing */}
             {isAnalyzing && (
               <div className="w-full bg-white border border-[#2563EB]/40 rounded-2xl p-6 sm:p-8 shadow-md shadow-blue-500/5 space-y-6 fade-in">
                 
@@ -468,7 +475,6 @@ export default function App() {
 
                     return (
                       <div key={idx} className="flex items-start space-x-3.5 transition-all duration-300">
-                        {/* Bullet Icon */}
                         <div className="relative shrink-0 flex items-center justify-center">
                           {isCompleted ? (
                             <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold shadow-md shadow-green-500/10">
@@ -490,7 +496,6 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* Text */}
                         <div className="flex-1">
                           <h4 className={`text-xs font-bold ${
                             isCompleted ? "text-slate-400 line-through" : isRunning ? "text-blue-700 font-extrabold" : "text-slate-300"
@@ -554,8 +559,8 @@ export default function App() {
               </button>
             </div>
 
-            <p className="text-[10px] text-slate-400 text-center px-4">
-              AgentFlow system uses structural pipeline verification logic before producing definitive responses.
+            <p className="text-[10px] text-slate-400 px-4 text-center leading-relaxed font-semibold uppercase tracking-wider">
+              AgentFlow runs sequentially to guarantee code quality. Product Manager ➔ Coder ➔ Code Reviewer ➔ Revision ➔ QA Tester.
             </p>
           </form>
         </div>
