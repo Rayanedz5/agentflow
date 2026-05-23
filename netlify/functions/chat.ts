@@ -1,45 +1,59 @@
 import { Handler } from '@netlify/functions';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// Initialize the Gemini API safely with the backend environment variable
+const apiKey = process.env.GEMINI_API_KEY || "";
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 export const handler: Handler = async (event, context) => {
-  // Only allow POST requests (matching your frontend fetch method)
-  if (event.httpMethod !== "POST") {
-    return { 
-      statusCode: 405, 
-      body: JSON.stringify({ error: "Method Not Allowed" }) 
+  // 1. Allow only POST requests
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method Not Allowed' }),
     };
   }
 
   try {
-    // 1. Grab the user requirement message sent from your frontend
+    // 2. Validate API Key configuration
+    if (!genAI) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Gemini API key is missing in Netlify environment variables.' }),
+      };
+    }
+
+    // 3. Parse incoming user message
     const { message } = JSON.parse(event.body || '{}');
+    if (!message) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Message payload is required' }),
+      };
+    }
 
-    // 2. Initialize Gemini using the environment variable saved on Netlify
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-    
-    // ====================================================================
-    // PLACE YOUR MULTI-AGENT ARCHITECTURE LOGIC HERE
-    // (Your Product Manager, Coder, Reviewer, and QA Tester turn loops)
-    // ====================================================================
-    
-    // Example placeholder execution:
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // 4. Call Gemini Model (using gemini-pro or your chosen model)
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
     const result = await model.generateContent(message);
-    const finalAgentOutput = result.response.text();
+    const responseText = result.response.text();
 
-    // 3. Return the response back to your React frontend safely
+    // 5. Return response to your frontend React app
     return {
       statusCode: 200,
-      headers: { 
-        "Content-Type": "application/json" 
+      headers: {
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ response: finalAgentOutput }),
+      body: JSON.stringify({ response: responseText }),
     };
 
   } catch (error: any) {
-    return { 
-      statusCode: 500, 
-      body: JSON.stringify({ error: error.message }) 
+    console.error('Backend Error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ 
+        error: 'Internal Server Error', 
+        details: error.message || error 
+      }),
     };
   }
 };
