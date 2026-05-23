@@ -1,0 +1,6 @@
+{
+  "name": "AgentFlow",
+  "description": "A collaborative multi-agent code development, review, and documentation assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
