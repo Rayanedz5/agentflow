@@ -7,7 +7,7 @@ export interface AgentStep {
 
 export interface ChatMessage {
   id: string;
-  sender: "user" | "system" | "agents";
+  sender: "user" | "system" | "agents" | "bot";
   text: string;
   timestamp: Date;
   trace?: AgentStep[];
