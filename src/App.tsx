@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertCircle, Trash2, Send } from 'lucide-react';
+import { Trash2, Send } from 'lucide-react';
 import { ChatMessage } from './types';
 
 export default function App() {
@@ -107,19 +107,6 @@ export default function App() {
         <div className="flex flex-1 space-y-8 mb-6 flex-col">
           {messages.map((msg, index) => {
             const isUser = msg.sender === "user";
-            const isSystem = msg.sender === "system";
-
-            if (isSystem) {
-              return (
-                <div key={msg.id} className="p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start space-x-3 fade-in">
-                  <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-xs text-red-800">Connection Failed</p>
-                    <p className="text-xs text-red-700 mt-1 leading-relaxed">{msg.text}</p>
-                  </div>
-                </div>
-              );
-            }
 
             return (
               <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
